@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 
 app.use("/api/auth", authRoutes); // All auth routes under `/api/auth`
 
-const PORT = 3001;
+const PORT = 5001;
 app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
 });
