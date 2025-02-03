@@ -5,3 +5,5 @@ module.exports = {
     DB_PASSWORD: "",
     DB_NAME: "vs_db",
 };
+JWT_SECRET='secretoken'
+

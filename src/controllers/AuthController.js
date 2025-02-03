@@ -1,5 +1,7 @@
 const db = require("../../db");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
 
 // Register User Function
 const register = async (req, res) => {
@@ -64,5 +66,48 @@ const register = async (req, res) => {
     }
 };
 
+
+
 // Export function
-module.exports = { register };
+
+
+
+// Login User Function
+const login = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({ error: "Username and Password are required!" });
+        }
+
+        // Check if user exists
+        const [user] = await db.promise().query(
+            "SELECT * FROM users WHERE username = ?", [username]
+        );
+
+        if (user.length === 0) {
+            return res.status(400).json({ error: "User not found!" });
+        }
+
+        const userData = user[0];
+
+        // Compare password
+        const isMatch = await bcrypt.compare(password, userData.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: "Invalid credentials!" });
+        }
+
+        // Generate JWT token
+        const token = jwt.sign({ id: userData.id, username: userData.username }, "your_secret_key", { expiresIn: "1h" });
+
+        return res.status(200).json({ message: "Login successful!", username: userData.username, token });
+
+    } catch (error) {
+        console.error("Error:", error.message);
+        return res.status(500).json({ error: "Server error", details: error.message });
+    }
+};
+
+module.exports = { login,register };
+
