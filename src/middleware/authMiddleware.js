@@ -1,18 +1,20 @@
 const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
-  const token = req.headers["authorization"]; // Or wherever your token is sent
+  const authHeader = req.headers["authorization"];
 
-  if (!token) {
+  if (!authHeader) {
     return res.status(403).json({ success: false, message: "No token provided." });
   }
 
+  const token = authHeader.split(" ")[1]; // ✅ "Bearer <token>" से सिर्फ टोकन निकालें
+
   try {
-    const decoded = jwt.verify(token, process.env.raj12345); // Make sure your SECRET_KEY is set
-    req.user = decoded;  // Attach the user data to the request
-    next();  // Proceed to the next middleware or route handler
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // ✅ सही SECRET_KEY दें
+    req.user = decoded;  // ✅ डिकोड किए गए यूज़र डेटा को req.user में रखें
+    next();  // ✅ अगले मिडलवेयर या रूट हैंडलर पर जाएं
   } catch (err) {
-    return res.status(403).json({ success: false, message: "Failed to authenticate token." });
+    return res.status(403).json({ success: false, message: "Invalid Token" });
   }
 };
 
