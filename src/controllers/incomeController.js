@@ -5,7 +5,6 @@ const roi = async (req, res) => {
     if (!req.user || !req.user.id) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
-
     const userId = req.user.id; 
 
     const incomes = await Income.findAll({
