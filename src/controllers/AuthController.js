@@ -1,7 +1,8 @@
 const db = require("../../db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
+const nodemailer = require("nodemailer");
+const config = require("../config/env"); // Environment Variables
 
 // Register User Function
 const register = async (req, res) => {
@@ -109,5 +110,92 @@ const login = async (req, res) => {
     }
 };
 
-module.exports = { login,register };
 
+
+
+const forgotPassword = async (req, res) => {
+
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+    }
+
+    // Check if user exists
+    db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
+        if (err) return res.status(500).json({ message: "Database error" });
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const user = results[0];
+
+        // Generate reset token
+        const token = jwt.sign({ id: user.id },"mysecretkey123", { expiresIn: "1h" });
+
+        // Reset link
+        const resetLink = `http://localhost:3000/reset-password/${token}`;
+
+        // Nodemailer Setup
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: config.EMAIL,
+                pass: config.PASSWORD, // Gmail ke liye App Password use karein
+            },
+        });
+
+        // Email Options
+        const mailOptions = {
+            from: config.EMAIL,
+            to: email,
+            subject: "Password Reset Request",
+            html: `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`,
+        };
+
+        // Send Email
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.error(error);
+                return res.status(500).json({ message: "Error sending email" });
+            }
+
+            res.json({ message: "Reset link sent to email" });
+        });
+    });
+};
+
+// ✅ Reset Password Handler
+const resetPassword = async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+        return res.status(400).json({ message: "Password is required" });
+    }
+
+    try {
+        // Verify token
+        const decoded = jwt.verify(token, "mysecretkey123");
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(password, 5);
+
+        // Update password in database
+        db.query("UPDATE users SET password = ? WHERE id = ?", [hashedPassword, decoded.id], (err) => {
+            if (err) return res.status(500).json({ message: "Database error" });
+
+            res.json({ message: "Password reset successful" });
+        });
+    } catch (error) {
+        return res.status(400).json({ message: "Invalid or expired token" });
+    }
+};
+
+module.exports = {
+    register,
+    login,
+    forgotPassword,
+    resetPassword
+};
+                                                                                                                                                                                                                                                                                                                                                                                                                
