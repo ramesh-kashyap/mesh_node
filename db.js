@@ -6,7 +6,7 @@ const db = mysql.createConnection({
     host: "localhost",      // MySQL Server ka Hostname (Local system ke liye "localhost" use karein)
     user: "root",           // MySQL ka Username (Default: "root")
     password: "",           // MySQL ka Password (Agar password set kiya hai to yaha likhein, warna blank chhodein)
-    database: "vs_db"  // Aapke MySQL ka Database Name
+    database: "meshchain"  // Aapke MySQL ka Database Name
 });
 
 // Connect to Database
